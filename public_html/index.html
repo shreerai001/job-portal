@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Job Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" href="images/logo.png" type="image/png">
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+    <header>
+        <div class="bg-primary text-white py-3">
+            <div class="container d-flex align-items-center justify-content-between">
+                <div>
+                    <a href="index.html">
+                        <img src="images/logo.png" alt="Logo" style="height: 50px;">
+                    </a>
+                </div>
+                <div class="container d-flex align-items-center justify-content-between">
+                    <a href="index.html" class="text-white text-decoration-none mx-auto">
+                        <h1 class="m-0 text-center" style="font-size: 2rem;">Student Job Portal</h1>
+                    </a>
+                </div>
+            </div>
+            <nav class="navbar navbar-expand-lg navbar-dark">
+                <div class="container-fluid">
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav mx-auto">
+                            <li class="nav-item">
+                                <a class="nav-link active fw-bold px-5" href="#" data-page="home"
+                                    style="font-size: 1.5rem;">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link fw-bold px-5" href="#" data-page="jobs"
+                                    style="font-size: 1.5rem;">Jobs</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link fw-bold px-5" href="#" data-page="contact"
+                                    style="font-size: 1.5rem;">Contact</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link fw-bold px-5" href="#" data-page="about"
+                                    style="font-size: 1.5rem;">About</a>
+                            </li>
+                            <li class="nav-item" id="user-nav"></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+    </header>
+
+    <div id="search-jobs"></div>
+
+    <div class="container my-5 flex-grow-1">
+        <div class="row">
+            <aside class="col-md-3 mb-4">
+                <div id="sidebar"></div>
+            </aside>
+
+            <main class="col-md-9 text-center">
+                <h2 class="mb-4">Welcome to Student Job Portal</h2>
+                <p class="lead">Find your dream job with ease. Explore thousands of job listings tailored to your skills
+                    and preferences.</p>
+                <a href="#" class="btn btn-primary btn-lg" data-page="jobs">Explore Jobs</a>
+            </main>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-3 mt-auto">
+        <div class="container text-center">
+            <p>&copy; 2025 Student Job Portal. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="scripts/load-components.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userNav = document.getElementById('user-nav');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const userEmail = localStorage.getItem('userEmail');
+            const userPic = localStorage.getItem('userPic'); // Optional: set this when user uploads a profile pic
+
+            if (isLoggedIn && userEmail) {
+                // If you have a userPic, show it, else show email
+                if (userPic) {
+                    userNav.innerHTML = `
+                        <a class="nav-link px-3" href="profile.html" title="${userEmail}">
+                            <img src="${userPic}" alt="Profile" class="rounded-circle" style="height:36px;width:36px;object-fit:cover;">
+                        </a>
+                    `;
+                } else {
+                    userNav.innerHTML = `
+                        <a class="nav-link fw-bold px-3" href="profile.html" title="${FirstName} ${LastName}">
+                            <span class="d-inline-block" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;">${userEmail}</span>
+                        </a>
+                    `;
+                }
+            } else {
+                userNav.innerHTML = `<a class="nav-link fw-bold px-3" href="login.html">Login</a>`;
+            }
+        });
+    </script>
+</body>
+
+</html>
