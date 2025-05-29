@@ -48,6 +48,13 @@
         // Load header and footer
         fetch('components/header.html').then(r => r.text()).then(d => document.getElementById('header-container').innerHTML = d);
         fetch('components/footer.html').then(r => r.text()).then(d => document.getElementById('footer-container').innerHTML = d);
+        document.addEventListener('DOMContentLoaded', function () {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            if (isLoggedIn) {
+                // Already logged in, redirect to profile page
+                window.location.href = 'profile.html';
+            }
+        });
     </script>
 </body>
 

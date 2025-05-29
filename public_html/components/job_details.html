@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,41 +9,50 @@
     <link rel="stylesheet" href="../styles/main.css">
     <link rel="icon" href="../images/logo.png" type="image/png">
 </head>
+
 <body>
-<div id="header-container"></div>
-<div class="container my-5">
-    <div id="job-details-content" class="mx-auto" style="max-width: 700px;"></div>
-    <div id="job-details-error" class="alert alert-danger d-none"></div>
-</div>
-<div id="footer-container"></div>
-<script>
-// Load header and footer
-fetch('../components/header.html').then(r=>r.text()).then(d=>document.getElementById('header-container').innerHTML=d);
-fetch('../components/footer.html').then(r=>r.text()).then(d=>document.getElementById('footer-container').innerHTML=d);
+    <header class="bg-primary text-white py-3">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="/index.html" class="me-3">
+                <img src="../images/logo.png" alt="Logo" style="height: 50px;">
+            </a>
+            <div class="d-flex align-items-center mx-auto">
+                <a href="/index.html" class="text-white text-decoration-none">
+                    <h1 class="m-0 text-center" style="font-size: 2rem;">Student Job Portal</h1>
+                </a>
+                <a href="/profile.html" class="ms-3" title="Profile">
+                    <img src="../images/user.png" alt="User" class="rounded-circle" style="height:40px;width:40px;object-fit:cover;">
+                </a>
+            </div>
+        </div>
+    </header>
+    <div class="container my-5">
+        <div id="job-details-content" class="mx-auto" style="max-width: 700px;"></div>
+        <div id="job-details-error" class="alert alert-danger d-none"></div>
+        <div id="applicants-section" class="mt-4"></div>
+    </div>
+    <div id="footer-container" class="mt-auto"></div>
+    <script>
+        fetch('../components/header.html').then(r => r.text()).then(d => document.getElementById('header-container').innerHTML = d);
+        fetch('../components/footer.html').then(r => r.text()).then(d => document.getElementById('footer-container').innerHTML = d);
 
-// Get jobId from query string
-function getJobIdFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('jobId');
-}
+        // Get jobId from query string
+        function getJobIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('jobId');
+        }
 
-const jobId = getJobIdFromUrl();
-let userType = null;
-let isLoggedIn = false;
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const userType = localStorage.getItem('userType');
+        const jobId = getJobIdFromUrl();
 
-// Check session (localStorage for demo)
-if (localStorage.getItem('userType') === 'job_seeker' && localStorage.getItem('isLoggedIn') === 'true') {
-    isLoggedIn = true;
-    userType = 'job_seeker';
-}
-
-if (jobId) {
-    fetch(`/api/jobs/${jobId}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.success && data.job) {
-                const job = data.job;
-                document.getElementById('job-details-content').innerHTML = `
+        if (jobId) {
+            fetch(`/api/jobs/${jobId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.job) {
+                        const job = data.job;
+                        let jobHtml = `
                     <div class='card shadow'>
                         <div class='card-header bg-primary text-white'>
                             <h3 class='mb-0'>${job.title}</h3>
@@ -55,34 +65,90 @@ if (jobId) {
                             <hr>
                             <p><strong>Description:</strong></p>
                             <p>${job.description || ''}</p>
-                            <div class="d-grid mt-4">
-                                <button id="applyBtn" class="btn btn-success btn-lg">Apply</button>
-                            </div>
-                        </div>
-                    </div>
                 `;
-                // Attach apply button handler
-                document.getElementById('applyBtn').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    if (!isLoggedIn) {
-                        window.location.href = '../login.html';
+
+                        // Show Apply button only for job seekers
+                        if (isLoggedIn && userType === 'job_seeker') {
+                            jobHtml += `
+                        <div class="d-grid mt-4">
+                            <button id="applyBtn" class="btn btn-success btn-lg">Apply</button>
+                        </div>
+                    `;
+                        }
+
+                        jobHtml += `</div></div>`;
+                        document.getElementById('job-details-content').innerHTML = jobHtml;
+
+                        // Apply button handler
+                        if (isLoggedIn && userType === 'job_seeker') {
+                            document.getElementById('applyBtn').addEventListener('click', function (e) {
+                                e.preventDefault();
+                                fetch('/api/apply', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        jobId: jobId,
+                                        userEmail: localStorage.getItem('userEmail')
+                                    })
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert('Application submitted!');
+                                    } else {
+                                        alert(data.message || 'Could not apply.');
+                                    }
+                                })
+                                .catch(() => {
+                                    alert('Failed to submit application.');
+                                });
+                            });
+                        }
+
+                        // If employer, fetch applicants
+                        if (isLoggedIn && userType === 'job_employer') {
+                            fetch(`/api/job/${jobId}/applicants`)
+                                .then(res => res.json())
+                                .then(data => {
+                                    const applicantsSection = document.getElementById('applicants-section');
+                                    if (data.success && data.applicants.length > 0) {
+                                        let html = `
+                                    <div class="card mt-4 border-info">
+                                        <div class="card-header bg-info text-white">
+                                            <h5 class="mb-0">Applicants</h5>
+                                        </div>
+                                        <ul class="list-group list-group-flush">
+                                `;
+                                        data.applicants.forEach(applicant => {
+                                            html += `<li class="list-group-item">
+                                        <strong>${applicant.firstName} ${applicant.lastName}</strong>
+                                        <span class="text-muted ms-2">${applicant.email}</span>
+                                    </li>`;
+                                        });
+                                        html += '</ul></div>';
+                                        applicantsSection.innerHTML = html;
+                                    } else {
+                                        applicantsSection.innerHTML = `
+                                    <div class="alert alert-info mt-4">No applicants for this job yet.</div>
+                                `;
+                                    }
+                                });
+                        }
+
                     } else {
-                        alert('Application submitted! (Demo)');
+                        document.getElementById('job-details-error').textContent = 'Job not found.';
+                        document.getElementById('job-details-error').classList.remove('d-none');
                     }
+                })
+                .catch(() => {
+                    document.getElementById('job-details-error').textContent = 'Failed to load job details.';
+                    document.getElementById('job-details-error').classList.remove('d-none');
                 });
-            } else {
-                document.getElementById('job-details-error').textContent = 'Job not found.';
-                document.getElementById('job-details-error').classList.remove('d-none');
-            }
-        })
-        .catch(() => {
-            document.getElementById('job-details-error').textContent = 'Failed to load job details.';
+        } else {
+            document.getElementById('job-details-error').textContent = 'No job specified.';
             document.getElementById('job-details-error').classList.remove('d-none');
-        });
-} else {
-    document.getElementById('job-details-error').textContent = 'No job specified.';
-    document.getElementById('job-details-error').classList.remove('d-none');
-}
-</script>
+        }
+    </script>
 </body>
+
 </html>

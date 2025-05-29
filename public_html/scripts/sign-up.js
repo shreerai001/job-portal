@@ -2,7 +2,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('signupForm').addEventListener('submit', function (event) {
         event.preventDefault();
 
-        const name = document.getElementById('name');
+        const firstName = document.getElementById('firstName');
+        const lastName = document.getElementById('lastName');
         const email = document.getElementById('email');
         const password = document.getElementById('password');
         const userType = document.getElementById('userType');
@@ -10,15 +11,21 @@ document.addEventListener('DOMContentLoaded', function () {
         let isValid = true;
 
         // Clear previous error messages
-        document.getElementById('nameError').textContent = '';
+        document.getElementById('firstNameError').textContent = '';
+        document.getElementById('lastNameError').textContent = '';
         document.getElementById('emailError').textContent = '';
         document.getElementById('passwordError').textContent = '';
         document.getElementById('userTypeError').textContent = '';
 
-        // Validate name
-        if (!name.value.trim()) {
+        // Validate first name
+        if (!firstName.value.trim()) {
             isValid = false;
-            document.getElementById('nameError').textContent = 'Full name is required.';
+            document.getElementById('firstNameError').textContent = 'First name is required.';
+        }
+        // Validate last name
+        if (!lastName.value.trim()) {
+            isValid = false;
+            document.getElementById('lastNameError').textContent = 'Last name is required.';
         }
 
         // Validate email
@@ -49,28 +56,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    name: name.value.trim(),
+                    firstName: firstName.value.trim(),
+                    lastName: lastName.value.trim(),
                     email: email.value.trim(),
                     password: password.value.trim(),
                     userType: userType.value
                 })
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Sign up successful! Redirecting to login...');
-                    window.location.href = 'login.html';
-                } else {
-                    if (data.message && data.message.includes('Email already registered')) {
-                        document.getElementById('emailError').textContent = data.message;
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Sign up successful! Redirecting to login...');
+                        window.location.href = 'login.html';
                     } else {
-                        alert(data.message || 'Signup failed.');
+                        if (data.message && data.message.includes('Email already registered')) {
+                            document.getElementById('emailError').textContent = data.message;
+                        } else {
+                            alert(data.message || 'Signup failed.');
+                        }
                     }
-                }
-            })
-            .catch(() => {
-                alert('Server error. Please try again later.');
-            });
+                })
+                .catch(() => {
+                    alert('Server error. Please try again later.');
+                });
         }
     });
 });

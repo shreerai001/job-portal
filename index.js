@@ -3,6 +3,7 @@ const express = require('express')
 const bodyParser = require('body-parser');
 const { authenticateUser } = require('./auth');
 const sqlite3 = require('sqlite3').verbose();
+const bcrypt = require('bcrypt');
 const db = new sqlite3.Database('job.sqlite');
 
 // Create a new web application by calling the express function
@@ -19,11 +20,16 @@ app.post('/api/login', (req, res) => {
   if (!email || !password || !userType) {
     return res.status(400).json({ success: false, message: 'All fields are required.' });
   }
-  authenticateUser(email, password, userType, (err, user) => {
+  db.get('SELECT * FROM users WHERE email = ? AND userType = ?', [email, userType], async (err, user) => {
     if (err) {
       return res.status(500).json({ success: false, message: 'Server error.' });
     }
     if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials.' });
+    }
+    // Compare hashed password
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
     // For demo: no session, just success
@@ -32,27 +38,29 @@ app.post('/api/login', (req, res) => {
 });
 
 // Signup handler
-app.post('/api/signup', (req, res) => {
-  const { name, email, password, userType } = req.body;
-  if (!name || !email || !password || !userType) {
+app.post('/api/signup', async (req, res) => {
+  const { firstName, lastName, email, password, userType } = req.body;
+  if (!firstName || !lastName || !email || !password || !userType) {
     return res.status(400).json({ success: false, message: 'All fields are required.' });
   }
-  // Split name into firstName and lastName (simple split)
-  const [firstName, ...rest] = name.trim().split(' ');
-  const lastName = rest.join(' ');
-  db.run(
-    `INSERT INTO users (email, password, userType, firstName, lastName) VALUES (?, ?, ?, ?, ?)`,
-    [email, password, userType, firstName, lastName],
-    function(err) {
-      if (err) {
-        if (err.message && err.message.includes('UNIQUE constraint failed')) {
-          return res.status(409).json({ success: false, message: 'Email already registered.' });
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    db.run(
+      `INSERT INTO users (firstName, lastName, email, password, userType) VALUES (?, ?, ?, ?, ?)`,
+      [firstName, lastName, email, hashedPassword, userType],
+      function (err) {
+        if (err) {
+          if (err.message.includes('UNIQUE constraint failed: users.email')) {
+            return res.json({ success: false, message: 'Email already registered.' });
+          }
+          return res.json({ success: false, message: 'Signup failed.' });
         }
-        return res.status(500).json({ success: false, message: 'Server error.' });
+        res.json({ success: true });
       }
-      res.json({ success: true, message: 'Signup successful!' });
-    }
-  );
+    );
+  } catch (err) {
+    res.json({ success: false, message: 'Server error.' });
+  }
 });
 
 // List jobs handler
@@ -65,7 +73,6 @@ app.get('/api/jobs', (req, res) => {
   });
 });
 
-// Get job by id
 app.get('/api/jobs/:id', (req, res) => {
   const jobId = req.params.id;
   db.get('SELECT * FROM jobs WHERE id = ?', [jobId], (err, row) => {
@@ -79,7 +86,6 @@ app.get('/api/jobs/:id', (req, res) => {
   });
 });
 
-// Post a new job
 app.post('/api/jobs', (req, res) => {
   const { title, company, location, salary, description } = req.body;
   if (!title || !company || !description) {
@@ -89,7 +95,7 @@ app.post('/api/jobs', (req, res) => {
   db.run(
     `INSERT INTO jobs (title, company, location, salary, description, posted_date) VALUES (?, ?, ?, ?, ?, ?)`,
     [title, company, location, salary, description, posted_date],
-    function(err) {
+    function (err) {
       if (err) {
         return res.status(500).json({ success: false, message: 'Server error.' });
       }
@@ -98,7 +104,6 @@ app.post('/api/jobs', (req, res) => {
   );
 });
 
-// Search jobs by title
 app.get('/api/jobs/search', (req, res) => {
   const query = req.query.query || '';
   db.all(
@@ -113,7 +118,6 @@ app.get('/api/jobs/search', (req, res) => {
   );
 });
 
-// Sidebar companies with job count
 app.get('/api/sidebar/companies', (req, res) => {
   db.all(
     'SELECT company, COUNT(*) as jobCount FROM jobs GROUP BY company ORDER BY jobCount DESC',
@@ -127,7 +131,6 @@ app.get('/api/sidebar/companies', (req, res) => {
   );
 });
 
-// Save contact message
 app.post('/api/contact', (req, res) => {
   const { name, email, phone, address, postcode, company, message } = req.body;
   if (!name || !email || !phone || !message) {
@@ -137,7 +140,7 @@ app.post('/api/contact', (req, res) => {
   db.run(
     `INSERT INTO contact_messages (name, email, phone, address, postcode, company, message, submitted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [name, email, phone, address, postcode, company, message, submitted_at],
-    function(err) {
+    function (err) {
       if (err) {
         return res.status(500).json({ success: false, message: 'Server error.' });
       }
@@ -146,8 +149,94 @@ app.post('/api/contact', (req, res) => {
   );
 });
 
+// POST /api/apply - Save a job application
+app.post('/api/apply', (req, res) => {
+  const { jobId, userEmail } = req.body;
+  if (!jobId || !userEmail) {
+    return res.status(400).json({ success: false, message: 'Missing job or user info.' });
+  }
+  db.get('SELECT id FROM users WHERE email = ?', [userEmail], (err, user) => {
+    if (err || !user) {
+      return res.status(400).json({ success: false, message: 'User not found.' });
+    }
+    const userId = user.id;
+    const appliedAt = new Date().toISOString();
+    // Prevent duplicate applications
+    db.get('SELECT id FROM job_applications WHERE user_id = ? AND job_id = ?', [userId, jobId], (err, row) => {
+      if (row) {
+        return res.json({ success: false, message: 'You have already applied for this job.' });
+      }
+      db.run(
+        `INSERT INTO job_applications (user_id, job_id, applied_at) VALUES (?, ?, ?)`,
+        [userId, jobId, appliedAt],
+        function (err) {
+          if (err) {
+            return res.status(500).json({ success: false, message: 'Database error.' });
+          }
+          res.json({ success: true, message: 'Application submitted!' });
+        }
+      );
+    });
+  });
+});
+
+// Get jobs posted by employer
+app.get('/api/employer/jobs', (req, res) => {
+  const email = req.query.email;
+  db.all('SELECT * FROM jobs WHERE company IN (SELECT company FROM users WHERE email = ?)', [email], (err, rows) => {
+    if (err) return res.json({ success: false, jobs: [] });
+    res.json({ success: true, jobs: rows });
+  });
+});
+
+// Get jobs applied by a job seeker
+app.get('/api/seeker/applications', (req, res) => {
+  const email = req.query.email;
+  db.get('SELECT id FROM users WHERE email = ?', [email], (err, user) => {
+    if (err || !user) return res.json({ success: false, jobs: [] });
+    db.all(
+      `SELECT jobs.id, jobs.title, jobs.company, jobs.location, jobs.salary, jobs.posted_date, job_applications.status
+             FROM job_applications
+             JOIN jobs ON jobs.id = job_applications.job_id
+             WHERE job_applications.user_id = ?`,
+      [user.id],
+      (err, rows) => {
+        if (err) return res.json({ success: false, jobs: [] });
+        res.json({ success: true, jobs: rows });
+      }
+    );
+  });
+});
+
+// Get users who applied for a specific job
+app.get('/api/job/:jobId/applicants', (req, res) => {
+  const jobId = req.params.jobId;
+  db.all(
+    `SELECT users.firstName, users.lastName, users.email
+         FROM job_applications
+         JOIN users ON users.id = job_applications.user_id
+         WHERE job_applications.job_id = ?`,
+    [jobId],
+    (err, rows) => {
+      if (err) return res.json({ success: false, applicants: [] });
+      res.json({ success: true, applicants: rows });
+    }
+  );
+});
+
+app.get('/api/job/:jobId/applied', (req, res) => {
+  const jobId = req.params.jobId;
+  const userEmail = req.query.userEmail;
+  db.get('SELECT id FROM users WHERE email = ?', [userEmail], (err, user) => {
+    if (err || !user) return res.json({ applied: false });
+    db.get('SELECT id FROM job_applications WHERE user_id = ? AND job_id = ?', [user.id, jobId], (err, row) => {
+      res.json({ applied: !!row });
+    });
+  });
+});
+
 // Tell our application to listen to requests at port 3000 on the localhost
-app.listen(port, ()=> {
+app.listen(port, () => {
   // When the application starts, print to the console that our app is
   // running at http://localhost:3000. Print another message indicating
   // how to shut the server down.

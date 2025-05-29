@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,110 +9,124 @@
     <link rel="stylesheet" href="../styles/main.css">
     <link rel="icon" href="../images/logo.png" type="image/png">
 </head>
+
 <body>
-<div id="header-container"></div>
-<div class="container my-5">
-    <h2 class="mb-4 text-center text-primary fw-bold">Employer Dashboard</h2>
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-primary text-white text-center">
-                    <h4 class="mb-0">Post a New Job</h4>
-                </div>
-                <div class="card-body p-4">
-                    <form id="postJobForm">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="jobTitle" class="form-label">Job Title</label>
-                                <input type="text" class="form-control" id="jobTitle" required>
-                                <div class="text-danger small" id="jobTitleError"></div>
+    <header class="bg-primary text-white py-3">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="/index.html" class="me-3">
+                <img src="../images/logo.png" alt="Logo" style="height: 50px;">
+            </a>
+            <div class="d-flex align-items-center mx-auto">
+                <a href="/index.html" class="text-white text-decoration-none">
+                    <h1 class="m-0 text-center" style="font-size: 2rem;">Student Job Portal</h1>
+                </a>
+                <a href="/profile.html" class="ms-3" title="Profile">
+                    <img src="../images/user.png" alt="User" class="rounded-circle" style="height:40px;width:40px;object-fit:cover;">
+                </a>
+            </div>
+        </div>
+    </header>
+    <div class="container my-5">
+        <h2 class="mb-4 text-center text-primary fw-bold">Employer Dashboard</h2>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-lg border-0">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h4 class="mb-0">Post a New Job</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="postJobForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="jobTitle" class="form-label">Job Title</label>
+                                    <input type="text" class="form-control" id="jobTitle" required>
+                                    <div class="text-danger small" id="jobTitleError"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="company" class="form-label">Company Name</label>
+                                    <input type="text" class="form-control" id="company" required>
+                                    <div class="text-danger small" id="companyError"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="location" class="form-label">Location</label>
+                                    <input type="text" class="form-control" id="location">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="salary" class="form-label">Salary</label>
+                                    <input type="text" class="form-control" id="salary">
+                                </div>
+                                <div class="col-12">
+                                    <label for="description" class="form-label">Job Description</label>
+                                    <textarea class="form-control" id="description" rows="5" required></textarea>
+                                    <div class="text-danger small" id="descriptionError"></div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label for="company" class="form-label">Company Name</label>
-                                <input type="text" class="form-control" id="company" required>
-                                <div class="text-danger small" id="companyError"></div>
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg shadow">Post Job</button>
                             </div>
-                            <div class="col-md-6">
-                                <label for="location" class="form-label">Location</label>
-                                <input type="text" class="form-control" id="location">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="salary" class="form-label">Salary</label>
-                                <input type="text" class="form-control" id="salary">
-                            </div>
-                            <div class="col-12">
-                                <label for="description" class="form-label">Job Description</label>
-                                <textarea class="form-control" id="description" rows="5" required></textarea>
-                                <div class="text-danger small" id="descriptionError"></div>
-                            </div>
-                        </div>
-                        <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg shadow">Post Job</button>
-                        </div>
-                    </form>
-                    <div id="postJobSuccess" class="alert alert-success mt-3 d-none"></div>
-                    <div id="postJobError" class="alert alert-danger mt-3 d-none"></div>
+                        </form>
+                        <div id="postJobSuccess" class="alert alert-success mt-3 d-none"></div>
+                        <div id="postJobError" class="alert alert-danger mt-3 d-none"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<div id="footer-container"></div>
-<script>
-function attachEmployerJobFormHandler() {
-    const form = document.getElementById('postJobForm');
-    if (!form) return;
-    form.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        document.getElementById('jobTitleError').textContent = '';
-        document.getElementById('companyError').textContent = '';
-        document.getElementById('descriptionError').textContent = '';
-        document.getElementById('postJobSuccess').classList.add('d-none');
-        document.getElementById('postJobError').classList.add('d-none');
-        const title = document.getElementById('jobTitle').value.trim();
-        const company = document.getElementById('company').value.trim();
-        const location = document.getElementById('location').value.trim();
-        const salary = document.getElementById('salary').value.trim();
-        const description = document.getElementById('description').value.trim();
-        let valid = true;
-        if (!title) {
-            document.getElementById('jobTitleError').textContent = 'Job title is required.';
-            valid = false;
-        }
-        if (!company) {
-            document.getElementById('companyError').textContent = 'Company name is required.';
-            valid = false;
-        }
-        if (!description) {
-            document.getElementById('descriptionError').textContent = 'Description is required.';
-            valid = false;
-        }
-        if (!valid) return;
-        try {
-            const response = await fetch('/api/jobs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, company, location, salary, description })
+    <div id="footer-container"></div>
+    <script>
+        function attachEmployerJobFormHandler() {
+            const form = document.getElementById('postJobForm');
+            if (!form) return;
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                document.getElementById('jobTitleError').textContent = '';
+                document.getElementById('companyError').textContent = '';
+                document.getElementById('descriptionError').textContent = '';
+                document.getElementById('postJobSuccess').classList.add('d-none');
+                document.getElementById('postJobError').classList.add('d-none');
+                const title = document.getElementById('jobTitle').value.trim();
+                const company = document.getElementById('company').value.trim();
+                const location = document.getElementById('location').value.trim();
+                const salary = document.getElementById('salary').value.trim();
+                const description = document.getElementById('description').value.trim();
+                let valid = true;
+                if (!title) {
+                    document.getElementById('jobTitleError').textContent = 'Job title is required.';
+                    valid = false;
+                }
+                if (!company) {
+                    document.getElementById('companyError').textContent = 'Company name is required.';
+                    valid = false;
+                }
+                if (!description) {
+                    document.getElementById('descriptionError').textContent = 'Description is required.';
+                    valid = false;
+                }
+                if (!valid) return;
+                try {
+                    const response = await fetch('/api/jobs', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, company, location, salary, description })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        document.getElementById('postJobSuccess').textContent = 'Job posted successfully!';
+                        document.getElementById('postJobSuccess').classList.remove('d-none');
+                        form.reset();
+                    } else {
+                        document.getElementById('postJobError').textContent = data.message || 'Failed to post job.';
+                        document.getElementById('postJobError').classList.remove('d-none');
+                    }
+                } catch (err) {
+                    document.getElementById('postJobError').textContent = 'Server error. Please try again later.';
+                    document.getElementById('postJobError').classList.remove('d-none');
+                }
             });
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById('postJobSuccess').textContent = 'Job posted successfully!';
-                document.getElementById('postJobSuccess').classList.remove('d-none');
-                form.reset();
-            } else {
-                document.getElementById('postJobError').textContent = data.message || 'Failed to post job.';
-                document.getElementById('postJobError').classList.remove('d-none');
-            }
-        } catch (err) {
-            document.getElementById('postJobError').textContent = 'Server error. Please try again later.';
-            document.getElementById('postJobError').classList.remove('d-none');
         }
-    });
-}
-attachEmployerJobFormHandler();
-// Load header and footer
-fetch('../components/header.html').then(r=>r.text()).then(d=>document.getElementById('header-container').innerHTML=d);
-fetch('../components/footer.html').then(r=>r.text()).then(d=>document.getElementById('footer-container').innerHTML=d);
-</script>
+        attachEmployerJobFormHandler();
+        // Load footer if needed
+        fetch('../components/footer.html').then(r => r.text()).then(d => document.getElementById('footer-container').innerHTML = d);
+    </script>
 </body>
 </html>

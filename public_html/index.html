@@ -49,6 +49,12 @@
                                 <a class="nav-link fw-bold px-5" href="#" data-page="about"
                                     style="font-size: 1.5rem;">About</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link px-3" href="profile.html" title="Profile">
+                                    <img src="images/user.png" alt="User" class="rounded-circle"
+                                        style="height:36px;width:36px;object-fit:cover;">
+                                </a>
+                            </li>
                             <li class="nav-item" id="user-nav"></li>
                         </ul>
                     </div>
@@ -83,7 +89,7 @@
 
     <script src="scripts/load-components.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const userNav = document.getElementById('user-nav');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             const userEmail = localStorage.getItem('userEmail');

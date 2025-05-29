@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function attachSearchFormHandler() {
         const searchForm = document.getElementById('searchJobsForm');
         if (searchForm) {
-            searchForm.addEventListener('submit', function(e) {
+            searchForm.addEventListener('submit', function (e) {
                 e.preventDefault();
                 const query = document.getElementById('searchQuery').value.trim();
                 const jobsList = document.getElementById('jobs-list');
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 });
                                 // Attach click event to all view details buttons
                                 document.querySelectorAll('.view-details-btn').forEach(btn => {
-                                    btn.addEventListener('click', function(e) {
+                                    btn.addEventListener('click', function (e) {
                                         e.preventDefault();
                                         const jobId = this.getAttribute('data-job-id');
                                         window.location.href = `components/job_details.html?jobId=${jobId}`;
@@ -165,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                     // Attach click event to all view details buttons
                     document.querySelectorAll('.view-details-btn').forEach(btn => {
-                        btn.addEventListener('click', function(e) {
+                        btn.addEventListener('click', function (e) {
                             e.preventDefault();
                             const jobId = this.getAttribute('data-job-id');
                             window.location.href = `components/job_details.html?jobId=${jobId}`;
@@ -219,8 +219,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const mainElement = document.querySelector("main");
                 if (mainElement) {
                     mainElement.innerHTML = data;
-                    updateActiveLink(page); 
-                    attachEventListeners(); 
+                    updateActiveLink(page);
+                    attachEventListeners();
                     if (page === 'jobs') loadJobs(); // Load jobs if jobs page
                     if (page === 'contact') attachContactFormHandler(); // Attach contact form handler if contact page
                 } else {

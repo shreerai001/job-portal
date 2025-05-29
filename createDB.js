@@ -49,6 +49,20 @@ db.serialize(() => {
         }
         console.log('Contact messages table created or already exists.');
     });
+    db.run(`CREATE TABLE IF NOT EXISTS job_applications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        job_id INTEGER NOT NULL,
+        applied_at TEXT NOT NULL,
+        status TEXT DEFAULT 'applied',
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (job_id) REFERENCES jobs(id)
+    )`, (err) => {
+        if (err) {
+            return console.error('Could not create job_applications table', err.message);
+        }
+        console.log('Job applications table created or already exists.');
+    });
 });
 
 db.close((err) => {
