@@ -87,21 +87,24 @@ app.get('/api/jobs/:id', (req, res) => {
 });
 
 app.post('/api/jobs', (req, res) => {
-  const { title, company, location, salary, description } = req.body;
-  if (!title || !company || !description) {
-    return res.status(400).json({ success: false, message: 'Title, company, and description are required.' });
+  const { title, company, location, salary, description, email } = req.body; 
+  if (!title || !company || !description || !email) {
+    return res.status(400).json({ success: false, message: 'Title, company, description, and email are required.' });
   }
-  const posted_date = new Date().toISOString();
-  db.run(
-    `INSERT INTO jobs (title, company, location, salary, description, posted_date) VALUES (?, ?, ?, ?, ?, ?)`,
-    [title, company, location, salary, description, posted_date],
-    function (err) {
-      if (err) {
-        return res.status(500).json({ success: false, message: 'Server error.' });
+  db.get('SELECT id FROM users WHERE email = ?', [email], (err, user) => {
+    if (err || !user) return res.status(400).json({ success: false, message: 'Employer not found.' });
+    const posted_date = new Date().toISOString();
+    db.run(
+      `INSERT INTO jobs (title, company, location, salary, description, employer_id, posted_date) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [title, company, location, salary, description, user.id, posted_date],
+      function (err) {
+        if (err) {
+          return res.status(500).json({ success: false, message: 'Server error.' });
+        }
+        res.json({ success: true, message: 'Job posted successfully!' });
       }
-      res.json({ success: true, message: 'Job posted successfully!' });
-    }
-  );
+    );
+  });
 });
 
 app.get('/api/jobs/search', (req, res) => {
@@ -180,13 +183,20 @@ app.post('/api/apply', (req, res) => {
   });
 });
 
-// Get jobs posted by employer
+// Get jobs posted by a specific employer
 app.get('/api/employer/jobs', (req, res) => {
-  const email = req.query.email;
-  db.all('SELECT * FROM jobs WHERE company IN (SELECT company FROM users WHERE email = ?)', [email], (err, rows) => {
-    if (err) return res.json({ success: false, jobs: [] });
-    res.json({ success: true, jobs: rows });
-  });
+    const email = req.query.email;
+    db.get('SELECT id FROM users WHERE email = ?', [email], (err, user) => {
+        if (err || !user) return res.json({ success: false, jobs: [] });
+        db.all(
+            'SELECT * FROM jobs WHERE employer_id = ? ORDER BY posted_date DESC',
+            [user.id],
+            (err, rows) => {
+                if (err) return res.json({ success: false, jobs: [] });
+                res.json({ success: true, jobs: rows });
+            }
+        );
+    });
 });
 
 // Get jobs applied by a job seeker

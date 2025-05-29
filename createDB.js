@@ -13,7 +13,9 @@ db.serialize(() => {
         location TEXT,
         description TEXT,
         posted_date TEXT NOT NULL,
-        salary TEXT
+        salary TEXT,
+        employer_id INTEGER NOT NULL,
+        FOREIGN KEY (employer_id) REFERENCES users(id)
     )`, (err) => {
         if (err) {
             return console.error('Could not create jobs table', err.message);

@@ -107,7 +107,14 @@
                     const response = await fetch('/api/jobs', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title, company, location, salary, description })
+                        body: JSON.stringify({
+                            title,
+                            company,
+                            location,
+                            salary,
+                            description,
+                            email: localStorage.getItem('userEmail') // <-- Add this line
+                        })
                     });
                     const data = await response.json();
                     if (data.success) {
